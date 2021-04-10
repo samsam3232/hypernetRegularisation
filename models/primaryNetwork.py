@@ -92,9 +92,9 @@ class PrimaryNetwork(nn.Module):
             x = F.relu(self.bn1(self.conv1(x)))
         else:
             if self.type == "CIFAR":
-                x = F.relu(self.bn1(F.conv2d(x / math.sqrt(3*3*3), noise[curr:curr + self.mod_sizes[index]].reshape((64, 3, 3, 3)), stride=1, padding=1)))
+                x = F.relu(self.bn1(F.conv2d(x / math.sqrt(3*3*3), noise[curr:curr + self.mod_sizes[index]].reshape((16, 3, 3, 3)), stride=1, padding=1)))
             else:
-                x = F.relu(self.bn1(F.conv2d(x / math.sqrt(7*3*3), noise[curr:curr + self.mod_sizes[index]].reshape((16, 3, 7, 7)), stride=1, padding=1)))
+                x = F.relu(self.bn1(F.conv2d(x / math.sqrt(7*3*3), noise[curr:curr + self.mod_sizes[index]].reshape((64, 3, 7, 7)), stride=1, padding=1)))
         index = 1
         curr = 1
         for i in range(len(self.res_net)):
