@@ -49,7 +49,7 @@ class PrimaryNetwork(nn.Module):
             self.final = nn.Linear(512, num_classes)
 
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
-
+        self.global_avg = nn.AdaptiveAvgPool2d((1,1))
 
         for i in range(len(self.FILTER_SIZE[self.type])):
             self._make_layer(block, self.FILTER_SIZE[self.type][i], num_blocks[i], self.STRIDE[self.type][i])
@@ -99,10 +99,10 @@ class PrimaryNetwork(nn.Module):
         curr = 1
         for i in range(len(self.res_net)):
             # if i != 15 and i != 17:
-            w1 = Parameter(noise[curr:curr + self.mod_sizes[index]].reshape(self.shapes[index]))
+            w1 = Parameter(noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
             curr += self.mod_sizes[index]
             index += 1
-            w2 = Parameter(noise[curr:curr + self.mod_sizes[index]].reshape(self.shapes[index]))
+            w2 = Parameter(noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
             curr += self.mod_sizes[index]
             index += 1
             w1.to(self.device)
@@ -119,9 +119,9 @@ class PrimaryNetwork(nn.Module):
                 x = self.final(x.view(-1, 512))
         else:
             if self.type == "CIFAR":
-                x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + self.mod_sizes[index]].reshape(self.shapes[index]))
+                x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
             else:
-                x = F.linear((x.view(-1, 512) / math.sqrt(512)), noise[curr:curr + self.mod_sizes[index]].reshape(self.shapes[index]))
+                x = F.linear((x.view(-1, 512) / math.sqrt(512)), noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
 
         return x, noise
 
