@@ -46,7 +46,7 @@ import matplotlib.pyplot as plt
 #             print('[%d, %5d] loss: %.3f' %
 #                   (epoch + 1, i + 1, running_loss / 1000))
 #             running_loss = 0.0
-def end_of_training_stats(outputs_dict, network_base, network_second, output_path):
+def end_of_training_stats(outputs_dict, network_base, output_path):
 
     plot_results(outputs_dict, output_path)
     print("\t \t", "="*80)
@@ -267,7 +267,7 @@ def main(size = 18, dataset = "CIFAR10", dropout =  [0.0, 0.0], dropout_epoch = 
     print("\t \t After training")
     print("\t \t", "=" * 80)
 
-    end_of_training_stats(ouputs, network_base, network_second, output_path, testloader)
+    end_of_training_stats(ouputs, network_base, output_path)
 
 if __name__ == '__main__':
     

@@ -41,12 +41,14 @@ class PrimaryNetwork(nn.Module):
             self.lay_shapes = [(16, 3, 3, 3)]
             self.mod_sizes = [16*3*3*3]
             self.final = nn.Linear(64, num_classes)
+            self.final_shape = 64
         else:
             self.conv1 = nn.Conv2d(3, 64, 7, stride=2, padding=3, bias=False)
             self.bn1 = nn.BatchNorm2d(64)
             self.lay_shapes = [(64, 3, 7, 7)]
             self.mod_sizes = [64*3*7*7]
             self.final = nn.Linear(512, num_classes)
+            self.final_shape = 512
 
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.global_avg = nn.AdaptiveAvgPool2d((1,1))
@@ -88,13 +90,7 @@ class PrimaryNetwork(nn.Module):
         index = 0
         curr = 0
         noise = self.hyper_net()
-        if self.regularize[index]:
-            x = F.relu(self.bn1(self.conv1(x)))
-        else:
-            if self.type == "CIFAR":
-                x = F.relu(self.bn1(F.conv2d(x / math.sqrt(3*3*3), noise[curr:curr + self.mod_sizes[index]].reshape((16, 3, 3, 3)), stride=1, padding=1)))
-            else:
-                x = F.relu(self.bn1(F.conv2d(x / math.sqrt(7*3*3), noise[curr:curr + self.mod_sizes[index]].reshape((64, 3, 7, 7)), stride=1, padding=1)))
+        x = F.relu(self.bn1(self.conv1(x)))
         index = 1
         curr = 1
         for i in range(len(self.res_net)):
@@ -112,16 +108,7 @@ class PrimaryNetwork(nn.Module):
                 x = self.dropout(x)
 
         x = self.global_avg(x)
-        if self.regularize[int(index / 2)]:
-            if self.type == "CIFAR":
-                x = self.final(x.view(-1,64))
-            else:
-                x = self.final(x.view(-1, 512))
-        else:
-            if self.type == "CIFAR":
-                x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
-            else:
-                x = F.linear((x.view(-1, 512) / math.sqrt(512)), noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
+        x = self.final(x.view(-1,self.final_shape))
 
         return x, noise
 
