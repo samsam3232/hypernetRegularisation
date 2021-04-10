@@ -99,8 +99,8 @@ def get_models(size, type, device, regularize, num_classes, opts, setup = 'SINGL
 
 def translate_regularize(regularize_delay, regularize_2_delay):
 
-    regularize = torch.tensor(regularize_delay) > 0
-    regularize_2 = torch.tensor(regularize_2_delay) > 0
+    regularize = torch.tensor(regularize_delay) == 0
+    regularize_2 = torch.tensor(regularize_2_delay) == 0
 
     return regularize, regularize_2
 
@@ -134,7 +134,7 @@ def train(network_base, network_second, optimizer_base, optimizer_second, dropou
             network_base.set_hyper_relu(True)
         for i in range(len(regularize_delay)):
             if regularize_delay[i] == epoch:
-                network_base.set_regularize(i, True)
+                network_base.res_net[i].regularize()
         network_base.train()
         between_loss_base = 0
         running_loss_base = 0.0
@@ -152,7 +152,7 @@ def train(network_base, network_second, optimizer_base, optimizer_second, dropou
                 network_second.set_hyper_relu(True)
             for i in range(len(regularize_2_delay)):
                 if regularize_2_delay[i] == epoch:
-                    network_second.set_regularize(i, True)
+                    network_second.res_net[i].regularize()
 
         for i, data in enumerate(trainloader, 0):
 

@@ -54,7 +54,7 @@ class PrimaryNetwork(nn.Module):
         self.global_avg = nn.AdaptiveAvgPool2d((1,1))
 
         for i in range(len(self.FILTER_SIZE[self.type])):
-            self._make_layer(block, self.FILTER_SIZE[self.type][i], num_blocks[i], self.STRIDE[self.type][i])
+            self._make_layer(block, self.FILTER_SIZE[self.type][i], num_blocks[i], self.STRIDE[self.type][i], regularize[i])
 
         if type == 'CIFAR':
             self.mod_sizes.append(64 * num_classes)
@@ -73,11 +73,11 @@ class PrimaryNetwork(nn.Module):
         self.weight_init()
 
 
-    def _make_layer(self, block, planes, num_blocks, stride):
+    def _make_layer(self, block, planes, num_blocks, stride, regularize):
 
         strides = [stride] + [1]*(num_blocks-1)
         for stride in strides:
-            self.res_net.append(block(self.in_planes, planes, stride))
+            self.res_net.append(block(self.in_planes, planes, stride, regularize))
             self.lay_shapes.append((planes, self.in_planes, 3, 3))
             self.lay_shapes.append((planes, planes, 3, 3))
             self.mod_sizes.append(planes * self.in_planes * 3 * 3)
@@ -103,7 +103,7 @@ class PrimaryNetwork(nn.Module):
             index += 1
             w1.to(self.device)
             w2.to(self.device)
-            x = (self.res_net[i](x, w1, w2, self.regularize[int(index / 2)]) / self.get_dims(x.shape))
+            x = (self.res_net[i](x, w1, w2) / self.get_dims(x.shape))
             if self.do_dropout and (i % 2 == 0):
                 x = self.dropout(x)
 
