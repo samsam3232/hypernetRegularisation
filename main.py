@@ -10,6 +10,7 @@ from utils import get_optimizer, get_accuracy, plot_results, print_network_struc
 from tqdm import tqdm
 import math
 import torch.optim as optim
+import datetime
 import matplotlib.pyplot as plt
 
 # transform = transforms.ToTensor()
@@ -216,6 +217,14 @@ def main(size = 18, dataset = "CIFAR10", dropout =  [0.0, 0.0], dropout_epoch = 
          transform_test = 'tensor_only', batch_size = 16,  optimizer_name = "AdamW", lr= [0.001, 0.001], momentum = [0.7, 0.7],
          weight_decay = [None, None], setup = "SINGLE", regularize_delay_2 = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
          root = None, output_path = None, train_epochs = 50, l1 = [False, False]):
+
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    output_path = os.path.join(output_path, "Resnet{}_{}".format(size, dataset))
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    t_now = datetime.datetime.now()
+    output_path = os.path.join(output_path, "{}_{}_{}_{}".format(t_now.month, t_now.day, t_now.hour, t_now.minute))
 
     print("\t \t", "=" * 80)
     print("\t \t Before everything")
