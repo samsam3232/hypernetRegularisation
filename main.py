@@ -11,6 +11,7 @@ from tqdm import tqdm
 import math
 import torch.optim as optim
 import datetime
+from models.orig_primary import PrimaryNetwork
 import matplotlib.pyplot as plt
 
 # transform = transforms.ToTensor()
@@ -252,8 +253,10 @@ def main(size = 18, dataset = "CIFAR10", dropout =  [0.0, 0.0], dropout_epoch = 
     print("\t \t Regularization translation")
     print("\t \t", "=" * 80)
 
-    network_base, network_second = get_models(size=size, type=type, device= device, regularize=regularize, num_classes=num_classes,
-                                              opts = options, setup=setup, regularize_2=regularize_2)
+    network_base = PrimaryNetwork()
+
+#    network_base, network_second = get_models(size=size, type=type, device= device, regularize=regularize, num_classes=num_classes,
+#                                              opts = options, setup=setup, regularize_2=regularize_2)
 
     print("\t \t", "=" * 80)
     print("\t \t After networks creation")

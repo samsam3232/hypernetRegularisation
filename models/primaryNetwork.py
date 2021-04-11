@@ -35,20 +35,19 @@ class PrimaryNetwork(nn.Module):
         self.mod_sizes = list()
         self.regularize = regularize
 
-        if type == 'CIFAR':
-            self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
-            self.bn1 = nn.BatchNorm2d(16)
-            self.lay_shapes = [(16, 3, 3, 3)]
-            self.mod_sizes = [16*3*3*3]
-            self.final = nn.Linear(64, num_classes)
-            self.final_shape = 64
-        else:
-            self.conv1 = nn.Conv2d(3, 64, 7, stride=2, padding=3, bias=False)
-            self.bn1 = nn.BatchNorm2d(64)
-            self.lay_shapes = [(64, 3, 7, 7)]
-            self.mod_sizes = [64*3*7*7]
-            self.final = nn.Linear(512, num_classes)
-            self.final_shape = 512
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.lay_shapes = [(16, 3, 3, 3)]
+        self.mod_sizes = [16*3*3*3]
+        self.final = nn.Linear(64, num_classes)
+        self.final_shape = 64
+        # else:
+        #     self.conv1 = nn.Conv2d(3, 64, 7, stride=2, padding=3, bias=False)
+        #     self.bn1 = nn.BatchNorm2d(64)
+        #     self.lay_shapes = [(64, 3, 7, 7)]
+        #     self.mod_sizes = [64*3*7*7]
+        #     self.final = nn.Linear(512, num_classes)
+        #     self.final_shape = 512
 
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.global_avg = nn.AdaptiveAvgPool2d((1,1))
