@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 from models.hyperNetwork import HyperNetwork
 import math
-from models.resnetModule import ResnetCifarBlock, ResnetBlock
+from models.resnetModule import ResnetBlock
 
-BLOCKS = {'CIFAR': ResnetCifarBlock, 'REG': ResnetBlock}
+#BLOCKS = {'CIFAR': ResnetCifarBlock, 'REG': ResnetBlock}
 SIZES_CIFAR = {18: [3, 3, 3], 32: [5, 5, 5], 44: [7, 7, 7]}
 SIZES_REG = {18: [2, 2, 2, 2], 32: [3, 4, 6, 4], 101: [3, 4, 23, 3]}
 SIZES = {'CIFAR': SIZES_CIFAR, 'REG': SIZES_REG}
@@ -52,9 +52,10 @@ class PrimaryNetwork(nn.Module):
 
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.global_avg = nn.AdaptiveAvgPool2d((1,1))
+        self.num_blocks = num_blocks
 
         for i in range(len(self.FILTER_SIZE[self.type])):
-            self._make_layer(block, self.FILTER_SIZE[self.type][i], num_blocks[i], self.STRIDE[self.type][i])
+            self._make_layer(block, self.FILTER_SIZE[self.type][i], self.num_blocks[i], self.STRIDE[self.type][i], self.regularize[i])
 
         if type == 'CIFAR':
             self.mod_sizes.append(64 * num_classes)
@@ -73,17 +74,20 @@ class PrimaryNetwork(nn.Module):
         self.weight_init()
 
 
-    def _make_layer(self, block, planes, num_blocks, stride):
+    def _make_layer(self, block, planes, num_blocks, stride, regularize):
 
         strides = [stride] + [1]*(num_blocks-1)
         for stride in strides:
-            self.res_net.append(block(self.in_planes, planes, stride))
+            self.res_net.append(block(self.in_planes, planes, stride, regularize))
             self.lay_shapes.append((planes, self.in_planes, 3, 3))
             self.lay_shapes.append((planes, planes, 3, 3))
             self.mod_sizes.append(planes * self.in_planes * 3 * 3)
             self.mod_sizes.append(planes * planes * 3 * 3)
             self.in_planes = planes * block.expansion
 
+    def replace_layer(self, index):
+
+        self.res_net[index] = ResnetBlock(self.lay_shapes[index+1][1],self.lay_shapes[index+1][0],self.res_net[index].stride1, True)
 
     def forward(self, x):
 
@@ -103,14 +107,20 @@ class PrimaryNetwork(nn.Module):
             index += 1
             w1.to(self.device)
             w2.to(self.device)
-            x = (self.res_net[i](x, w1, w2, self.regularize[int(index / 2)]) / self.get_dims(x.shape))
-            if self.do_dropout and (i % 2 == 0):
-                x = self.dropout(x)
+            x = (self.res_net[i](x, w1, w2) / self.get_dims(x.shape))
 
         x = self.global_avg(x)
         x = self.final(x.view(-1,self.final_shape))
 
         return x, noise
+
+    def insert_dropout(self):
+
+        added = 0
+        for i in range(len(self.res_net)):
+            if i % 2 == 1:
+                self.hyper_deconv.insert(i + added, self.dropout)
+                added += 1
 
     def get_dims(self, shape):
 

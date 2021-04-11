@@ -20,8 +20,6 @@ class HyperNetwork(nn.Module):
 
         self.hyper_deconv = nn.ModuleList()
         self.hyper_deconv.append(nn.ConvTranspose2d(3, 7, 3, stride=2, padding=1))
-        self.do_dropout = False
-        self.do_relu = False
         self.fc1 = nn.Linear(15 * 15 * 3, 30 * 30 * 3)
         curr_shape = (30,30)
         curr_size = 7 * ((curr_shape[-2] - 1) *2 + 1) * ((curr_shape[-2] - 1) *2 + 1)
@@ -42,12 +40,10 @@ class HyperNetwork(nn.Module):
             i += 1
 
         if "dropout_hyper" in options:
-            self.do_dropout = True
             self.dropout = nn.Dropout(options["dropout_hyper"])
         else:
             self.dropout = nn.Dropout(0.0)
-        if "relu" in options:
-            self.do_relu = True
+
         self.final = ElementWiseLayer(curr_size, device)
 
         self.device = device
@@ -61,11 +57,8 @@ class HyperNetwork(nn.Module):
         input = input.view((-1, 3, 30, 30))
         for i in range(len(self.hyper_deconv)):
             input = self.hyper_deconv[i](input)
-            if i % 2 == 0 and self.do_dropout:
-                input = self.dropout(input)
 
-        if self.do_relu:
-            input = self.final(F.relu(input.view(-1)))
+        input = self.final(input.view(-1))
 
         return input.view(-1)
 
@@ -74,3 +67,15 @@ class HyperNetwork(nn.Module):
         for m in self.modules():
             if (isinstance(m, nn.ConvTranspose2d)) or (isinstance(m, nn.Linear)):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+
+    def add_relu(self):
+
+        self.hyper_deconv.insert(len(self.hyper_deconv) - 1, nn.ReLU())
+
+    def insert_dropout(self):
+
+        added = 0
+        for i in range(len(self.hyper_deconv)):
+            if i % 2 == 1:
+                self.hyper_deconv.insert(i + added, self.dropout)
+                added += 1

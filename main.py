@@ -127,14 +127,14 @@ def train(network_base, network_second, optimizer_base, optimizer_second, dropou
     for epoch in tqdm(range(train_epochs)):
 
         if dropout_epoch[0] == epoch:
-            network_base.set_dropout(True)
+            network_base.insert_dropout()
         if dropout_hyper_epoch[0] == epoch:
-            network_base.set_hyper_dropout(True)
+            network_base.hyper_net.insert_dropout()
         if relu_epoch[0] == epoch:
-            network_base.set_hyper_relu(True)
+            network_base.hyper_net.add_relu()
         for i in range(len(regularize_delay)):
             if regularize_delay[i] == epoch:
-                network_base.res_net[i].regularize()
+                network_base.replace_layer(i)
         network_base.train()
         between_loss_base = 0
         running_loss_base = 0.0
@@ -145,14 +145,14 @@ def train(network_base, network_second, optimizer_base, optimizer_second, dropou
             between_loss_second = 0
             running_loss_second = 0.0
             if dropout_epoch[1] == epoch:
-                network_second.set_dropout(True)
+                network_second.insert_dropout()
             if dropout_hyper_epoch[1] == epoch:
-                network_second.set_hyper_dropout(True)
+                network_second.hyper_net.insert_dropout()
             if relu_epoch[1] == epoch:
-                network_second.set_hyper_relu(True)
+                network_second.hyper_net.add_relu()
             for i in range(len(regularize_2_delay)):
                 if regularize_2_delay[i] == epoch:
-                    network_second.res_net[i].regularize()
+                    network_second.replace_layer(i)
 
         for i, data in enumerate(trainloader, 0):
 
