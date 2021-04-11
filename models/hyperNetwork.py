@@ -62,11 +62,11 @@ class HyperNetwork(nn.Module):
 
         return input.view(-1)
 
-    # def weight_init(self):
-    #
-    #     for m in self.modules():
-    #         if (isinstance(m, nn.ConvTranspose2d)) or (isinstance(m, nn.Linear)):
-    #             nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+    def weight_init(self):
+
+        for m in self.modules():
+            if (isinstance(m, nn.ConvTranspose2d)) or (isinstance(m, nn.Linear)):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
 
     def add_relu(self):
 

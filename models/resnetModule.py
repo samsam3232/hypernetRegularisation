@@ -59,12 +59,13 @@ class ResnetBlock(nn.Module):
 
         return out
 
-    # def weight_init(self):
-    #
-    #     for m in self.modules():
-    #         if (isinstance(m, nn.ConvTranspose2d)) or (isinstance(m, nn.Linear)):
-    #             nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-    #
+    def weight_init(self):
+
+        for m in self.modules():
+            if (isinstance(m, nn.ConvTranspose2d)) or (isinstance(m, nn.Linear)):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+
+
 
 # class ResnetBlock(nn.Module):
 #
