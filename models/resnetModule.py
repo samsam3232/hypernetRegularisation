@@ -26,9 +26,6 @@ class ResnetCifarBlock(nn.Module):
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
 
-        if regularize:
-            self.conv1, self.conv2 = None, None
-
         self.bn1 = nn.BatchNorm2d(planes)
         self.bn2 = nn.BatchNorm2d(planes)
 
@@ -78,8 +75,7 @@ class ResnetBlock(nn.Module):
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
 
-        if regularize:
-            self.conv1, self.conv2 = None, None
+
 
         if stride == 2:
             self.stride1 = 2
