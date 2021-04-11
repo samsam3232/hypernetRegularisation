@@ -295,7 +295,7 @@ if __name__ == '__main__':
     parser.add_argument("--transform_test", type=str, default='tensor_only', help="Name of the transform for the training set")
     parser.add_argument("--batch_size", type = int, default=16)
     parser.add_argument("--optimizer_name", type=str, default="AdamW", help="Which optimizer to use")
-    parser.add_argument("--lr", type=float, default=[0.001, 0.001], help="Learning rate of the optimizer")
+    parser.add_argument("--lr", type=float, default=[0.001, 0.001], help="Learning rate of the optimizer", nargs="*")
     parser.add_argument("--momentum", type=float, default=[0.7, 0.7], help="Momentum in case of SGD")
     parser.add_argument("--weight_decay", type=float, default=[None, None], nargs='*', help="Weight_decay")
     parser.add_argument('--setup', type=str, help="COMPARE if you want to compare", default="SINGLE")

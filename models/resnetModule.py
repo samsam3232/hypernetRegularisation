@@ -20,7 +20,7 @@ class LambdaLayer(nn.Module):
 class ResnetCifarBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes=None, planes=None, stride=1, regularize = False):
+    def __init__(self, in_planes=None, planes=None, stride=1):
         super(ResnetCifarBlock, self).__init__()
 
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
@@ -43,10 +43,10 @@ class ResnetCifarBlock(nn.Module):
 
         self.weight_init()
 
-    def forward(self, x, conv1_w, conv2_w):
+    def forward(self, x, conv1_w, conv2_w, regularize):
 
         residual = self.reslayer(x)
-        if self.conv1 is not None:
+        if not regularize:
             out = F.relu(self.bn1(self.conv1(x)), inplace=True)
             out = self.bn2(self.conv2(out))
         else:
@@ -71,7 +71,7 @@ class ResnetCifarBlock(nn.Module):
 
 class ResnetBlock(nn.Module):
 
-    def __init__(self, in_planes=16, planes=16, stride = 1, regularize = False):
+    def __init__(self, in_planes=16, planes=16, stride = 1):
 
         super(ResnetBlock,self).__init__()
 
@@ -94,10 +94,10 @@ class ResnetBlock(nn.Module):
         self.weight_init()
 
 
-    def forward(self, x, conv1_w, conv2_w):
+    def forward(self, x, conv1_w, conv2_w, regularize):
 
         residual = self.reslayer(x)
-        if self.conv1 is not None:
+        if not regularize:
             out = F.relu(self.bn1(self.conv1(x)))
             out = self.bn2(self.conv2(out))
         else:
