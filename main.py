@@ -238,7 +238,7 @@ def main(size=18, dataset="CIFAR10", dropout=[0.0, 0.0], dropout_epoch=[-1, -1],
     print("\t \t", "=" * 80)
 
     curr_type = 'CIFAR' if "CIFAR" in dataset else "REG"
-    options = transform_to_options(dropout=dropout, dropout_hyper=dropout_hyper, relu=relu)
+    options = transform_to_options(dropout=dropout, dropout_hyper=dropout_hyper, relu=relu, setup=setup)
 
     print("\t \t", "=" * 80)
     print("\t \t After options transformations")
