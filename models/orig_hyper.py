@@ -31,14 +31,14 @@ class HyperNetwork(nn.Module):
 
         noise = torch.rand(15 * 15 * 3).to(self.device) * std
         noise.requires_grad = True
-        input = self.fc1(noise)
-        input = input.view((-1, 3, 30, 30))
-        input = self.dropout(input)
-        input = self.dc1(input)
-        input = self.dc2(input)
-        input = self.dropout(input)
-        input = self.dc3(input)
-        output = self.dc4(input)
+        inp = self.fc1(noise)
+        inp = inp.view((-1, 3, 30, 30))
+        inp = self.dropout(inp)
+        inp = self.dc1(inp)
+        inp = self.dc2(inp)
+        inp = self.dropout(inp)
+        inp = self.dc3(inp)
+        output = self.dc4(inp)
 #        output = self.neg(F.relu(output.view(-1)))
         return output.view(-1)
 

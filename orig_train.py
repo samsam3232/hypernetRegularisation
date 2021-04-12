@@ -48,8 +48,8 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
     accuracy_test = list()
     network = PrimaryNetwork(num_classes, device, regularize, 1, dropout[0])
     network.to(device)
-    optimizer = get_optimizer(network=network, optim_name=optimizer_name, lr=lr[0], momentum=momentum[0], weight_decay=weight_decay[0])
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=10)
+    optimizer = optim.AdamW(network.parameters(),lr=lr[0], weight_decay=weight_decay[0])
+ #   scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=10)
     network.train()
 
     if setup == "COMP":
@@ -60,7 +60,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
         network2.to(device)
         optimizer2 = get_optimizer(network=network, optim_name=optimizer_name, lr=lr[1], momentum=momentum[1],
                                   weight_decay=weight_decay[1])
-        scheduler2 = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=10)
+#        scheduler2 = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=10)
         network2.train()
 
     criterion = nn.CrossEntropyLoss()
@@ -81,10 +81,10 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
                 loss_l1 = torch.norm(noise, 1)* math.sqrt(math.sqrt(epoch)) / 300000
                 loss = loss_l1 + loss_ce
             else:
-                loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            scheduler.step(loss)
+              loss = criterion(outputs, labels)
+              loss.backward()
+              optimizer.step()
+#            scheduler.step(loss)
             running_loss += loss.item()
 
             if setup == "COMP":
@@ -98,7 +98,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
                     loss2 = criterion(outputs2, labels)
                 loss2.backward()
                 optimizer2.step()
-                scheduler2.step(loss2)
+#                scheduler2.step(loss2)
                 running_loss2 += loss2.item()
 
             if i % 1000 == 999:
@@ -131,8 +131,8 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Original training")
     parser.add_argument("--regularize", type=  bool, nargs='*', help="How to regularize the network", default=
-                        [True, True, False, False, False, False, True, True, True])
-    parser.add_argument("--regularize2", type=  bool, nargs='*', help="How to regularize the network", default=
+                        [False, False, False, False, False, False, False, False, False])
+    parser.add_argument("--regularize_2", type=  bool, nargs='*', help="How to regularize the network", default=
                         [False, False, False, False, False, False, False, False, False])
     parser.add_argument("--dataset_name", type=str, default='CIFAR100')
     parser.add_argument("--dropout", type=int, nargs='*', help="From which epoch begining dropout", default=[0., 0.])
@@ -145,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", type=float, default=[None, None], nargs='*', help="Weight_decay")
     parser.add_argument("--setup", type=str, default="SINGLE", help = "Set to COMP if you want to compare two models")
     parser.add_argument("--train_epochs", type=int,  default=50)
+    parser.add_argument("--do_l1", type=bool, nargs='*', default=[False, False], help="Whether to use l1 regularisation")
     args = parser.parse_args()
     outputs_dict, output_path = train(**vars(args))
     end_of_training_stats(outputs_dict, output_path)

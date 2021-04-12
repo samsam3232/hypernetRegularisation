@@ -53,14 +53,14 @@ class HyperNetwork(nn.Module):
 
         noise = torch.rand(15*15*3).to(self.device) * std
         noise.requires_grad = True
-        input = self.fc1(noise)
-        input = input.view((-1, 3, 30, 30))
+        inp = self.fc1(noise)
+        inp = inp.view((-1, 3, 30, 30))
         for i in range(len(self.hyper_deconv)):
-            input = self.hyper_deconv[i](input)
+            inp = self.hyper_deconv[i](inp)
 
-        input = self.final(input.view(-1))
+        inp = self.final(inp.view(-1))
 
-        return input.view(-1)
+        return inp.view(-1)
 
     def weight_init(self):
 

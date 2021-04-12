@@ -29,12 +29,13 @@ class PrimaryNetwork(nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.std = std
         self.num_classes = num_classes
-
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
         self.filter_size = [[64, 64], [64, 64], [64, 128], [128, 128], [128, 256], [256, 256], [256, 512], [512, 512]]
         self.strid = [1, 2, 2]
         self.res_net = nn.ModuleList()
         self.regularize = regularize
         self.in_planes = 16
+        self.final = nn.Linear(64, num_classes)
 
         for i in range(3):
             self._make_layer(ResnetBlock, self.PLANES[i], 3, regularize[i], self.strid[i])
@@ -53,9 +54,10 @@ class PrimaryNetwork(nn.Module):
         noise = self.hyper_net(self.std)
         index = 0
         curr = 0
-        x = F.relu(self.bn1(
-            F.conv2d(x / math.sqrt(3 * 3 * 3), noise[curr:curr + self.MOD_SIZES[index]].reshape((16, 3, 3, 3)),
-                     stride=1, padding=1)))
+        x = F.relu(self.bn1(self.conv1(x)))
+#        x = F.relu(self.bn1(
+#            F.conv2d(x / math.sqrt(3 * 3 * 3), noise[curr:curr + self.MOD_SIZES[index]].reshape((16, 3, 3, 3)),
+#                     stride=1, padding=1)))
         curr += self.MOD_SIZES[index]
         index += 1
         for i in range(9):
@@ -70,6 +72,7 @@ class PrimaryNetwork(nn.Module):
             x = (self.res_net[i](x, w1, w2))
 
         x = self.global_avg(x)
-        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
+#        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
+        x = self.final(x.view(-1, 64))
 
         return x, noise

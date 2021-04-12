@@ -86,7 +86,7 @@ class PrimaryNetwork(nn.Module):
 
     def replace_layer(self, index):
 
-        self.res_net[index] = ResnetBlock(self.lay_shapes[index+1][1],self.lay_shapes[index+1][0],self.res_net[index].stride1, True)
+        self.res_net[index] = ResnetBlock(self.lay_shapes[2*index+1][1],self.lay_shapes[2*index+1][0],self.res_net[index].stride1, True).to(self.device)
 
     def forward(self, x):
 
@@ -156,9 +156,9 @@ class PrimaryNetwork(nn.Module):
 
 
 
-def get_resnet(size, type, num_classes, device, regularize, options = {}):
+def get_resnet(size, curr_type, num_classes, device, regularize, options = {}):
 
-    return PrimaryNetwork(ResnetBlock, SIZES[type][size], num_classes, type, device, regularize, options)
+    return PrimaryNetwork(ResnetBlock, SIZES[curr_type][size], num_classes, curr_type, device, regularize, options)
 
 #primary = get_resnet(18, 'CIFAR', 100, 'cpu', [False, False, True], {"dropout" : 0.25, "relu": True})
 #print('Hey')
