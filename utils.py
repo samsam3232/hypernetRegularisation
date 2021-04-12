@@ -35,32 +35,46 @@ def get_accuracy(network, loader, device):
 def plot_results(output_dicts, outpath):
 
     plt.figure()
-    plt.plot(data=output_dicts['base_train'], color='r')
+    plt.plot(output_dicts['base_train'], color='r', label='base')
     if 'second_train' in output_dicts:
-        plt.plot(data=output_dicts['base_train'], color='b', alpha=0.5)
+        plt.plot(output_dicts['second_train'], color='b', alpha=0.5, label="second")
     plt.ylabel('train_accuracy')
     plt.xlabel('epoch number')
     plt.title("Train accuracy according to epoch")
+    plt.legend()
     plt.savefig(outpath + '/train_accuracy.png')
     plt.show()
 
     plt.figure()
-    plt.plot(data=output_dicts['base_test'], color='r')
+    plt.plot(output_dicts['base_test'], color='r', label='base')
     if 'second_test' in output_dicts:
-        plt.plot(data=output_dicts['second_test'], color='b', alpha=0.5)
+        plt.plot(output_dicts['second_test'], color='b', alpha=0.5, label="second")
     plt.ylabel('test_accuracy')
     plt.xlabel('epoch number')
+    plt.legend()
     plt.title("Test accuracy according to epoch")
     plt.savefig(outpath + '/test_accuracy.png')
     plt.show()
 
     plt.figure()
-    plt.plot(data=output_dicts['base_loss'], color='r')
+    plt.plot(output_dicts['base_loss'], color='r', label="base")
     if 'second_loss' in output_dicts:
-        plt.plot(data=output_dicts['second_loss'], color='b', alpha=0.5)
+        plt.plot(output_dicts['second_loss'], color='b', alpha=0.5, label="second")
+    plt.legend()
     plt.ylabel('Loss')
     plt.title("Loss every 50 batches")
     plt.savefig(outpath + '/loss.png')
+    plt.show()
+
+    plt.figure()
+    plt.plot(np.array(output_dicts['base_train']) - np.array(output_dicts['base_test']), color='r', label="base")
+    if 'second_train' in output_dicts:
+        plt.plot(np.array(output_dicts['second_train']) - np.array(output_dicts['second_test']), color='b', alpha = 0.5, label="base")
+    plt.legend()
+    plt.xlabel('epoch number')
+    plt.ylabel('Accuracies differences')
+    plt.title("Loss every 50 batches")
+    plt.savefig(outpath + '/diff_accuracies.png')
     plt.show()
 
 def print_network_structure(network):
