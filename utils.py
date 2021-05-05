@@ -17,7 +17,7 @@ def get_optimizer(network, optim_name, lr, momentum=0.7, weight_decay=None):
     return OPTIM_MAPPING[optim_name](network.parameters(), lr=lr)
 
 
-def get_accuracy(network, loader, device):
+def get_accuracy(network, loader, device, std):
     network.eval()
     correct = 0
     total = 0
@@ -25,7 +25,7 @@ def get_accuracy(network, loader, device):
         for data in loader:
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
-            outputs, noise = network(inputs)
+            outputs, noise = network(inputs, std)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
@@ -79,12 +79,21 @@ def plot_results(output_dicts, outpath):
     plt.plot(np.array(output_dicts['base_train']) - np.array(output_dicts['base_test']), color='r', label="base")
     if 'second_train' in output_dicts:
         plt.plot(np.array(output_dicts['second_train']) - np.array(output_dicts['second_test']), color='b', alpha=0.5,
-                 label="base")
+                 label="second")
     plt.legend()
     plt.xlabel('epoch number')
     plt.ylabel('Accuracies differences')
-    plt.title("Loss every 50 batches")
+    plt.title("Accuracies differences")
     plt.savefig(outpath + '/diff_accuracies.png')
+    plt.show()
+
+    plt.figure()
+    plt.plot(np.array(output_dicts['structure']), color='r', label="base")
+    plt.legend()
+    plt.xlabel('epoch number')
+    plt.ylabel('Non_zero proportion')
+    plt.title("Regularized_struct")
+    plt.savefig(outpath + '/regularized_struct.png')
     plt.show()
 
 

@@ -5,6 +5,7 @@ from models.orig_hyper import HyperNetwork
 from models.orig_resnet import ResnetBlock
 from torch.nn.parameter import Parameter
 import math
+import numpy as np
 
 
 class PrimaryNetwork(nn.Module):
@@ -49,9 +50,9 @@ class PrimaryNetwork(nn.Module):
             self.res_net.append(block(self.in_planes, planes, strides[j], regularize[j]))
             self.in_planes = planes * block.expansion
 
-    def forward(self, x):
+    def forward(self, x, std):
 
-        noise = self.hyper_net(self.std)
+        noise = self.hyper_net(std)
         index = 0
         curr = 0
         x = F.relu(self.bn1(self.conv1(x)))
@@ -60,6 +61,7 @@ class PrimaryNetwork(nn.Module):
 #                     stride=1, padding=1)))
         curr += self.MOD_SIZES[index]
         index += 1
+        weights = list()
         for i in range(9):
             w1 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2])
             curr += self.MOD_SIZES[index]
@@ -67,6 +69,9 @@ class PrimaryNetwork(nn.Module):
             w2 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2 + 1])
             curr += self.MOD_SIZES[index]
             index += 1
+            if self.regularize.reshape(9)[i]:
+                weights.append(w1.cpu().numpy())
+                weights.append(w2.cpu().numpy())
             w1.to(self.device)
             w2.to(self.device)
             x = (self.res_net[i](x, w1, w2))
@@ -75,4 +80,4 @@ class PrimaryNetwork(nn.Module):
 #        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
         x = self.final(x.view(-1, 64))
 
-        return x, noise
+        return x, np.array(weights)

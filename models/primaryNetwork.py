@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 from models.hyperNetwork import HyperNetwork
 import math
+import numpy as np
 from models.resnetModule import ResnetBlock
 
 #BLOCKS = {'CIFAR': ResnetCifarBlock, 'REG': ResnetBlock}
@@ -20,10 +21,17 @@ class PrimaryNetwork(nn.Module):
     STRIDE_REG = [1, 2, 2, 2]
     STRIDE_CIFAR = [1, 2, 2, 2]
     STRIDE = {'CIFAR': STRIDE_CIFAR, 'REG': STRIDE_REG}
+    MOD_SIZES = [432, 2304, 2304, 2304, 2304, 2304, 2304, 4608, 9216, 9216, 9216, 9216, 9216, 18432,
+                 36864, 36864, 36864, 36864, 36864, 6400]
+    SHAPES = [(16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3),
+              (32, 16, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3),
+              (64, 32, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3)]
 
     def __init__(self, block, num_blocks, num_classes, type, device, regularize, options ={}):
 
         super(PrimaryNetwork, self).__init__()
+
+        regularize = np.array(regularize).reshape((3, 3))
 
         self.device = device
         self.type = type
@@ -76,8 +84,8 @@ class PrimaryNetwork(nn.Module):
     def _make_layer(self, block, planes, num_blocks, stride, regularize):
 
         strides = [stride] + [1]*(num_blocks-1)
-        for stride in strides:
-            self.res_net.append(block(self.in_planes, planes, stride, regularize))
+        for j in range(len(strides)):
+            self.res_net.append(block(self.in_planes, planes, strides[j], regularize[j]))
             self.lay_shapes.append((planes, self.in_planes, 3, 3))
             self.lay_shapes.append((planes, planes, 3, 3))
             self.mod_sizes.append(planes * self.in_planes * 3 * 3)
@@ -90,19 +98,17 @@ class PrimaryNetwork(nn.Module):
 
     def forward(self, x):
 
-        index = 0
-        curr = 0
         noise = self.hyper_net()
         x = F.relu(self.bn1(self.conv1(x)))
         index = 1
         curr = 1
         for i in range(len(self.res_net)):
             # if i != 15 and i != 17:
-            w1 = Parameter(noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
-            curr += self.mod_sizes[index]
+            w1 = Parameter(noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2]))
+            curr += self.MOD_SIZES[index]
             index += 1
-            w2 = Parameter(noise[curr:curr + self.mod_sizes[index]].reshape(self.lay_shapes[index]))
-            curr += self.mod_sizes[index]
+            w2 = Parameter(noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2 + 1]))
+            curr += self.MOD_SIZES[index]
             index += 1
             w1.to(self.device)
             w2.to(self.device)
