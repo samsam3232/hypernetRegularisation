@@ -16,6 +16,10 @@ def end_of_training_stats(outputs_dict, output_path):
     plot_results(outputs_dict, output_path)
 
 
+def print_size_ratio(network, std):
+
+    print("\t \t Size ratio", network.get_size_ratio(std))
+
 def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_test, batch_size, optimizer_name, lr, momentum,
           weight_decay, train_epochs, setup, regularize_2, root=None):
 
@@ -68,9 +72,9 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
     criterion = nn.CrossEntropyLoss()
     for epoch in tqdm(range(train_epochs)):
         network.train()
-        std = 0.0
-        if epoch > 25:
-            std = 0.3
+        std = 0.5
+        if epoch > 2:
+            std = 0.7
         running_loss = 0.0
         between_loss = 0.0
         if setup == "COMP":
@@ -117,7 +121,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
                     losses_2.append(running_loss2 - between_loss2)
                     between_loss2 = running_loss2
 
-        net_struct.append(np.count_nonzero(noise / noise.size))
+        print_size_ratio(network, std)
         accuracy_train.append(get_accuracy(network, trainloader, device, std))
         accuracy_test.append(get_accuracy(network, testloader, device, std))
         if setup == "COMP":

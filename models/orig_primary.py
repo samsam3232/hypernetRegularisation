@@ -9,8 +9,8 @@ import numpy as np
 
 
 class PrimaryNetwork(nn.Module):
-    MOD_SIZES = [432, 2304, 2304, 2304, 2304, 2304, 2304, 4608, 9216, 9216, 9216, 9216, 9216, 18432,
-                 36864, 36864, 36864, 36864, 36864, 6400]
+    MOD_SIZES = np.array([2304, 2304, 2304, 2304, 2304, 2304, 4608, 9216, 9216, 9216, 9216, 9216, 18432,
+                          36864, 36864, 36864, 36864, 36864])
     SHAPES = [(16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3), (16, 16, 3, 3),
               (32, 16, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3), (32, 32, 3, 3),
               (64, 32, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3), (64, 64, 3, 3)]
@@ -24,7 +24,10 @@ class PrimaryNetwork(nn.Module):
         super(PrimaryNetwork, self).__init__()
 
         self.device = device
-        self.hyper_net = HyperNetwork(device, dropout)
+
+        hyper_size = np.sum(
+            [self.MOD_SIZES[i * 2: i * 2 + 2] for i in range(len(regularize.reshape(9))) if regularize.reshape(9)[i]])
+        self.hyper_net = HyperNetwork(device, hyper_size, dropout)
         self.hyper_net.to(device)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.bn1 = nn.BatchNorm2d(16)
@@ -50,34 +53,38 @@ class PrimaryNetwork(nn.Module):
             self.res_net.append(block(self.in_planes, planes, strides[j], regularize[j]))
             self.in_planes = planes * block.expansion
 
-    def forward(self, x, std):
+    def forward(self, x, std, keep_weights=False):
 
         noise = self.hyper_net(std)
         index = 0
         curr = 0
         x = F.relu(self.bn1(self.conv1(x)))
-#        x = F.relu(self.bn1(
-#            F.conv2d(x / math.sqrt(3 * 3 * 3), noise[curr:curr + self.MOD_SIZES[index]].reshape((16, 3, 3, 3)),
-#                     stride=1, padding=1)))
-        curr += self.MOD_SIZES[index]
-        index += 1
+        #        x = F.relu(self.bn1(
+        #            F.conv2d(x / math.sqrt(3 * 3 * 3), noise[curr:curr + self.MOD_SIZES[index]].reshape((16, 3, 3, 3)),
+        #                     stride=1, padding=1)))
         weights = list()
         for i in range(9):
-            w1 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2])
-            curr += self.MOD_SIZES[index]
-            index += 1
-            w2 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2 + 1])
-            curr += self.MOD_SIZES[index]
-            index += 1
             if self.regularize.reshape(9)[i]:
-                weights.append(w1.cpu().numpy())
-                weights.append(w2.cpu().numpy())
-            w1.to(self.device)
-            w2.to(self.device)
+                w1 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2])
+                curr += self.MOD_SIZES[index]
+                index += 1
+                w2 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2 + 1])
+                curr += self.MOD_SIZES[index]
+                index += 1
+                w1.to(self.device)
+                w2.to(self.device)
+            else:
+                w1 = None
+                w2 = None
+                index += 2
             x = (self.res_net[i](x, w1, w2))
-
         x = self.global_avg(x)
-#        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
+        #        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
         x = self.final(x.view(-1, 64))
 
         return x, np.array(weights)
+
+    def get_size_ratio(self, std):
+
+        weights = self.hyper_net(std, batch=32)
+        return torch.count_nonzero(weights) / weights.numel()
