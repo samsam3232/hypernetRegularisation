@@ -55,7 +55,6 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
     network = PrimaryNetwork(num_classes, device, regularize, 1, dropout[0])
     network.to(device)
     optimizer = optim.AdamW(network.parameters(),lr=lr[0], weight_decay=weight_decay[0])
- #   scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=10)
     network.train()
 
     if setup == "COMP":
@@ -70,11 +69,15 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
         network2.train()
 
     criterion = nn.CrossEntropyLoss()
+    net_struct.append(print_size_ratio(network, 0.0))
     for epoch in tqdm(range(train_epochs)):
+        l1_coeff = 0.
+        if do_l1[0]:
+          l1_coeff = 4.
         network.train()
-        std = 0.5
-        if epoch > 2:
-            std = 0.7
+        std = 0.0
+        if epoch > 25:
+            std = 0.3
         running_loss = 0.0
         between_loss = 0.0
         if setup == "COMP":
@@ -85,14 +88,11 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs, noise = network(inputs, std)
-            if do_l1[0]:
-                loss_ce = criterion(outputs, labels)
-                loss_l1 = torch.norm(noise, 1)* math.sqrt(math.sqrt(epoch)) / 300000
-                loss = loss_l1 + loss_ce
-            else:
-              loss = criterion(outputs, labels)
-              loss.backward()
-              optimizer.step()
+            loss_ce = criterion(outputs, labels)
+            loss_l1 = (torch.sum(torch.abs(noise)) / noise.numel()) * l1_coeff * (epoch+1)
+            loss = loss_l1 + loss_ce
+            loss.backward()
+            optimizer.step()
 #            scheduler.step(loss)
             running_loss += loss.item()
 
@@ -122,8 +122,12 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
                     between_loss2 = running_loss2
 
         print_size_ratio(network, std)
+        curr_accuracy_train= get_accuracy(network, trainloader, device, std)
         accuracy_train.append(get_accuracy(network, trainloader, device, std))
-        accuracy_test.append(get_accuracy(network, testloader, device, std))
+        print(curr_accuracy_train)
+        curr_accuracy_test = get_accuracy(network, testloader, device, std)
+        accuracy_test.append(curr_accuracy_test)
+        print(curr_accuracy_test)
         if setup == "COMP":
             accuracy_train_2.append(get_accuracy(network2, trainloader, device, std))
             accuracy_test_2.append(get_accuracy(network2, testloader, device, std))
@@ -156,7 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", type=float, default=[0.0, 0.0], nargs='*', help="Weight_decay")
     parser.add_argument("--setup", type=str, default="SINGLE", help = "Set to COMP if you want to compare two models")
     parser.add_argument("--train_epochs", type=int,  default=50)
-    parser.add_argument("--do_l1", type=bool, nargs='*', default=[False, False], help="Whether to use l1 regularisation")
+    parser.add_argument("--do_l1", type=bool, nargs='*', default=[True, False], help="Whether to use l1 regularisation")
     args = parser.parse_args()
     outputs_dict, output_path = train(**vars(args))
     end_of_training_stats(outputs_dict, output_path)

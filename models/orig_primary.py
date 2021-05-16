@@ -25,9 +25,9 @@ class PrimaryNetwork(nn.Module):
 
         self.device = device
 
-        hyper_size = np.sum(
+        self.hyper_size = np.sum(
             [self.MOD_SIZES[i * 2: i * 2 + 2] for i in range(len(regularize.reshape(9))) if regularize.reshape(9)[i]])
-        self.hyper_net = HyperNetwork(device, hyper_size, dropout)
+        self.hyper_net = HyperNetwork(device, self.hyper_size, dropout)
         self.hyper_net.to(device)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.bn1 = nn.BatchNorm2d(16)
@@ -62,7 +62,6 @@ class PrimaryNetwork(nn.Module):
         #        x = F.relu(self.bn1(
         #            F.conv2d(x / math.sqrt(3 * 3 * 3), noise[curr:curr + self.MOD_SIZES[index]].reshape((16, 3, 3, 3)),
         #                     stride=1, padding=1)))
-        weights = list()
         for i in range(9):
             if self.regularize.reshape(9)[i]:
                 w1 = noise[curr:curr + self.MOD_SIZES[index]].reshape(self.SHAPES[i * 2])
@@ -82,7 +81,7 @@ class PrimaryNetwork(nn.Module):
         #        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
         x = self.final(x.view(-1, 64))
 
-        return x, np.array(weights)
+        return x, noise[:int(self.hyper_size)]
 
     def get_size_ratio(self, std):
 
