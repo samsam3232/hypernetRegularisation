@@ -35,9 +35,9 @@ def get_accuracy(network, loader, device, std):
 
 def plot_results(output_dicts, outpath):
     plt.figure()
-    plt.plot(output_dicts['base_train'], color='r', label='base')
+    plt.plot(output_dicts['base_train'], color='r', label='ours')
     if 'second_train' in output_dicts:
-        plt.plot(output_dicts['second_train'], color='b', alpha=0.5, label="second")
+        plt.plot(output_dicts['second_train'], color='b', alpha=0.5, label="baseline")
     plt.ylabel('train_accuracy')
     plt.xlabel('epoch number')
     plt.title("Train accuracy according to epoch")
@@ -46,9 +46,9 @@ def plot_results(output_dicts, outpath):
     plt.show()
 
     plt.figure()
-    plt.plot(output_dicts['base_test'], color='r', label='base')
+    plt.plot(output_dicts['base_test'], color='r', label='ours')
     if 'second_test' in output_dicts:
-        plt.plot(output_dicts['second_test'], color='b', alpha=0.5, label="second")
+        plt.plot(output_dicts['second_test'], color='b', alpha=0.5, label="baseline")
     plt.ylabel('test_accuracy')
     plt.xlabel('epoch number')
     plt.legend()
@@ -66,9 +66,9 @@ def plot_results(output_dicts, outpath):
             if i < 0:
                 second_losses.remove(i)
     plt.figure()
-    plt.plot(base_losses, color='r', label="base")
+    plt.plot(base_losses, color='r', label="ours")
     if 'second_loss' in output_dicts:
-        plt.plot(second_losses, color='b', alpha=0.5, label="second")
+        plt.plot(second_losses, color='b', alpha=0.5, label="baseline")
     plt.legend()
     plt.ylabel('Loss')
     plt.title("Loss every 50 batches")
@@ -76,10 +76,10 @@ def plot_results(output_dicts, outpath):
     plt.show()
 
     plt.figure()
-    plt.plot(np.array(output_dicts['base_train']) - np.array(output_dicts['base_test']), color='r', label="base")
+    plt.plot(np.array(output_dicts['base_train']) - np.array(output_dicts['base_test']), color='r', label="ours")
     if 'second_train' in output_dicts:
         plt.plot(np.array(output_dicts['second_train']) - np.array(output_dicts['second_test']), color='b', alpha=0.5,
-                 label="second")
+                 label="baseline")
     plt.legend()
     plt.xlabel('epoch number')
     plt.ylabel('Accuracies differences')
@@ -88,7 +88,7 @@ def plot_results(output_dicts, outpath):
     plt.show()
 
     plt.figure()
-    plt.plot(np.array(output_dicts['structure']), color='r', label="base")
+    plt.plot(np.array(output_dicts['structure']), color='r', label="ours")
     plt.legend()
     plt.xlabel('epoch number')
     plt.ylabel('Non_zero proportion')

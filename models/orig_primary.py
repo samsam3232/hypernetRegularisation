@@ -86,4 +86,4 @@ class PrimaryNetwork(nn.Module):
     def get_size_ratio(self, std):
 
         weights = self.hyper_net(std, batch=32)
-        return torch.count_nonzero(weights) / weights.numel()
+        return torch.count_nonzero(weights[int(self.hyper_size)]) / weights.numel()

@@ -16,9 +16,12 @@ def end_of_training_stats(outputs_dict, output_path):
     plot_results(outputs_dict, output_path)
 
 
-def print_size_ratio(network, std):
+def print_size_ratio(network, std, print = False):
 
-    print("\t \t Size ratio", network.get_size_ratio(std))
+    size_rat = network.get_size_ratio(std)
+    if print:
+        print("\t \t Size ratio", size_rat)
+    return size_rat
 
 def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_test, batch_size, optimizer_name, lr, momentum,
           weight_decay, train_epochs, setup, regularize_2, root=None):
@@ -54,7 +57,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
     net_struct = list()
     network = PrimaryNetwork(num_classes, device, regularize, 1, dropout[0])
     network.to(device)
-    optimizer = optim.AdamW(network.parameters(),lr=lr[0], weight_decay=weight_decay[0])
+    optimizer = optim.SGD(network.parameters(),lr=lr[0], weight_decay=weight_decay[0], momentum=momentum[0])
     network.train()
 
     if setup == "COMP":
@@ -63,8 +66,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
         accuracy_test_2 = list()
         network2 = PrimaryNetwork(num_classes, device, regularize_2, 1, dropout[1])
         network2.to(device)
-        optimizer2 = get_optimizer(network=network2, optim_name=optimizer_name, lr=lr[1], momentum=momentum[1],
-                                  weight_decay=weight_decay[1])
+        optimizer2 = optim.SGD(network2.parameters(),lr=lr[0], weight_decay=weight_decay[0], momentum=momentum[0])
 #        scheduler2 = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.2, patience=10)
         network2.train()
 
@@ -73,16 +75,26 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
     for epoch in tqdm(range(train_epochs)):
         l1_coeff = 0.
         if do_l1[0]:
-          l1_coeff = 4.
+          l1_coeff = 0.5
         network.train()
         std = 0.0
-        if epoch > 25:
+        if epoch > 100:
             std = 0.3
+        if epoch == 60:
+            optimizer = optim.SGD(network.parameters(), lr=lr[0] * 0.2, weight_decay=weight_decay[0], momentum=momentum[0])
+            optimizer2 = optim.SGD(network2.parameters(), lr=lr[0] * 0.2, weight_decay=weight_decay[0], momentum=momentum[0])
+        if epoch == 120:
+            optimizer = optim.SGD(network.parameters(), lr=lr[0] * 0.04, weight_decay=weight_decay[0], momentum=momentum[0])
+            optimizer2 = optim.SGD(network2.parameters(), lr=lr[0] * 0.04, weight_decay=weight_decay[0], momentum=momentum[0])
+        if epoch == 160:
+            optimizer = optim.SGD(network.parameters(), lr=lr[0] * 0.008, weight_decay=weight_decay[0], momentum=momentum[0])
+            optimizer2 = optim.SGD(network2.parameters(), lr=lr[0] * 0.008, weight_decay=weight_decay[0], momentum=momentum[0])
         running_loss = 0.0
         between_loss = 0.0
         if setup == "COMP":
             running_loss2 = 0.0
             between_loss2 = 0.0
+            network2.train()
         for i, data in enumerate(trainloader, 0):
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
@@ -116,12 +128,13 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
 
             if i % 20 == 19:
                 losses.append(running_loss - between_loss)
+                net_struct.append(print_network_structure(network, std))
                 between_loss = running_loss
                 if setup == "COMP":
                     losses_2.append(running_loss2 - between_loss2)
                     between_loss2 = running_loss2
 
-        print_size_ratio(network, std)
+        print_size_ratio(network, std, True)
         curr_accuracy_train= get_accuracy(network, trainloader, device, std)
         accuracy_train.append(get_accuracy(network, trainloader, device, std))
         print(curr_accuracy_train)
@@ -155,9 +168,9 @@ if __name__ == "__main__":
     parser.add_argument("--transform_test", type=str, default='tensor_only', help="Name of the transform for the training set")
     parser.add_argument("--batch_size", type = int, default=16)
     parser.add_argument("--optimizer_name", type=str, default="AdamW", help="Which optimizer to use")
-    parser.add_argument("--lr", type=float, default=[0.001, 0.001], help="Learning rate of the optimizer", nargs="*")
-    parser.add_argument("--momentum", type=float, default=[0.7, 0.7], help="Momentum in case of SGD")
-    parser.add_argument("--weight_decay", type=float, default=[0.0, 0.0], nargs='*', help="Weight_decay")
+    parser.add_argument("--lr", type=float, default=[0.1, 0.1], help="Learning rate of the optimizer", nargs="*")
+    parser.add_argument("--momentum", type=float, default=[0.9, 0.9], help="Momentum in case of SGD")
+    parser.add_argument("--weight_decay", type=float, default=[5e-4, 5e-4], nargs='*', help="Weight_decay")
     parser.add_argument("--setup", type=str, default="SINGLE", help = "Set to COMP if you want to compare two models")
     parser.add_argument("--train_epochs", type=int,  default=50)
     parser.add_argument("--do_l1", type=bool, nargs='*', default=[True, False], help="Whether to use l1 regularisation")

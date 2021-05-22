@@ -35,8 +35,11 @@ class ResnetBlock(nn.Module):
 
         self.reslayer = nn.Sequential()
         if stride != 1 or in_planes != planes:
-            self.reslayer = LambdaLayer(
-                lambda x: F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes // 4, planes // 4), "constant", 0))
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes)
+            )
+
         else:
             self.reslayer = IdentityLayer()
 
