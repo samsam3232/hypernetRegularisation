@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.orig_hyper import HyperNetwork
+from models.orig_hyper import get_hyper
 from models.orig_resnet import ResnetBlock
-from torch.nn.parameter import Parameter
-import math
 import numpy as np
 
 
@@ -20,14 +18,14 @@ class PrimaryNetwork(nn.Module):
 
     PLANES = [16, 32, 64]
 
-    def __init__(self, num_classes, device, regularize, std, dropout):
+    def __init__(self, num_classes, device, regularize, std, dropout, architecture = "A"):
         super(PrimaryNetwork, self).__init__()
 
         self.device = device
 
         self.hyper_size = np.sum(
             [self.MOD_SIZES[i * 2: i * 2 + 2] for i in range(len(regularize.reshape(9))) if regularize.reshape(9)[i]])
-        self.hyper_net = HyperNetwork(device, self.hyper_size, dropout)
+        self.hyper_net = get_hyper(device, self.hyper_size, dropout, architecture)
         self.hyper_net.to(device)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.bn1 = nn.BatchNorm2d(16)
@@ -78,12 +76,12 @@ class PrimaryNetwork(nn.Module):
                 index += 2
             x = (self.res_net[i](x, w1, w2))
         x = self.global_avg(x)
-        #        x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
+        # x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
         x = self.final(x.view(-1, 64))
 
-        return x, noise[:int(self.hyper_size)]
+        return x, noise[0, :int(self.hyper_size)]
 
     def get_size_ratio(self, std):
 
         weights = self.hyper_net(std, batch=32)
-        return torch.count_nonzero(weights[int(self.hyper_size)]) / weights.numel()
+        return torch.count_nonzero(weights[0, :int(self.hyper_size)]) / weights[0, :int(self.hyper_size)].numel()

@@ -35,7 +35,7 @@ class ResnetBlock(nn.Module):
 
         self.reslayer = nn.Sequential()
         if stride != 1 or in_planes != planes:
-            self.shortcut = nn.Sequential(
+            self.reslayer = nn.Sequential(
                 nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes)
             )

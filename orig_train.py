@@ -23,8 +23,20 @@ def print_size_ratio(network, std, print = False):
         print("\t \t Size ratio", size_rat)
     return size_rat
 
+
+def get_std(curr_epoch, stds, std_epochs):
+
+    std = 0.0
+    for i in range(len(std_epochs)):
+        if curr_epoch >= std_epochs[i]:
+            std = stds[i]
+        else:
+            break
+    return std
+
+
 def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_test, batch_size, optimizer_name, lr, momentum,
-          weight_decay, train_epochs, setup, regularize_2, root=None):
+          weight_decay, train_epochs, setup, regularize_2, architecture, stds, std_epochs, root=None):
 
     regularize = np.array(regularize).reshape((3, 3))
     regularize_2 = np.array(regularize_2).reshape((3, 3))
@@ -55,7 +67,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
     accuracy_train = list()
     accuracy_test = list()
     net_struct = list()
-    network = PrimaryNetwork(num_classes, device, regularize, 1, dropout[0])
+    network = PrimaryNetwork(num_classes, device, regularize, 1, dropout[0], architecture)
     network.to(device)
     optimizer = optim.SGD(network.parameters(),lr=lr[0], weight_decay=weight_decay[0], momentum=momentum[0])
     network.train()
@@ -77,9 +89,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
         if do_l1[0]:
           l1_coeff = 0.5
         network.train()
-        std = 0.0
-        if epoch > 100:
-            std = 0.3
+        std = get_std(epoch, stds, std_epochs)
         if epoch == 60:
             optimizer = optim.SGD(network.parameters(), lr=lr[0] * 0.2, weight_decay=weight_decay[0], momentum=momentum[0])
             optimizer2 = optim.SGD(network2.parameters(), lr=lr[0] * 0.2, weight_decay=weight_decay[0], momentum=momentum[0])
@@ -152,15 +162,15 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
         outputs_dict["second_loss"] = losses_2
         outputs_dict["structure"] = net_struct
 
-    return outputs_dict, output_path
+    return outputs_dict, output_path, architecture
 
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Original training")
-    parser.add_argument("--regularize", type=  bool, nargs='*', help="How to regularize the network", default=
-                        [False, False, False, False, False, False, False, True, True])
-    parser.add_argument("--regularize_2", type=  bool, nargs='*', help="How to regularize the network", default=
+    parser.add_argument("--regularize", type=bool, nargs='*', help="How to regularize the network", default=
+                        [True, False, True, False, True, False, True, False, True])
+    parser.add_argument("--regularize_2", type=bool, nargs='*', help="How to regularize the network", default=
                         [False, False, False, False, False, False, False, False, False])
     parser.add_argument("--dataset_name", type=str, default='CIFAR100')
     parser.add_argument("--dropout", type=int, nargs='*', help="From which epoch begining dropout", default=[0., 0.])
@@ -174,6 +184,9 @@ if __name__ == "__main__":
     parser.add_argument("--setup", type=str, default="SINGLE", help = "Set to COMP if you want to compare two models")
     parser.add_argument("--train_epochs", type=int,  default=50)
     parser.add_argument("--do_l1", type=bool, nargs='*', default=[True, False], help="Whether to use l1 regularisation")
+    parser.add_argument("--architecture", type = str, default="A", help="Which hypernet architecture to choose")
+    parser.add_argument("--stds", type=float, nargs='*', default=[1.0, 2.0, 3.0], help="Which standard deviations to use")
+    parser.add_argument("--std_epochs", type=int, nargs='*', default=[15, 30, 70], help="From which epoch to run it")
     args = parser.parse_args()
-    outputs_dict, output_path = train(**vars(args))
+    outputs_dict, output_path, architecture = train(**vars(args))
     end_of_training_stats(outputs_dict, output_path)
