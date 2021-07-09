@@ -13,13 +13,13 @@ import math
 
 def end_of_training_stats(outputs_dict, output_path):
 
-    plot_results(outputs_dict, output_path)
+    plot_results(outputs_dict, output_path, architecture)
 
 
-def print_size_ratio(network, std, print = False):
+def print_size_ratio(network, std, print_rat = False):
 
     size_rat = network.get_size_ratio(std)
-    if print:
+    if print_rat:
         print("\t \t Size ratio", size_rat)
     return size_rat
 
@@ -138,7 +138,7 @@ def train(regularize, dataset_name, dropout, do_l1, transform_train, transform_t
 
             if i % 20 == 19:
                 losses.append(running_loss - between_loss)
-                net_struct.append(print_network_structure(network, std))
+                net_struct.append(print_size_ratio(network, std))
                 between_loss = running_loss
                 if setup == "COMP":
                     losses_2.append(running_loss2 - between_loss2)
@@ -189,4 +189,4 @@ if __name__ == "__main__":
     parser.add_argument("--std_epochs", type=int, nargs='*', default=[15, 30, 70], help="From which epoch to run it")
     args = parser.parse_args()
     outputs_dict, output_path, architecture = train(**vars(args))
-    end_of_training_stats(outputs_dict, output_path)
+    end_of_training_stats(outputs_dict, output_path, architecture)

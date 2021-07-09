@@ -2,6 +2,7 @@ import torch.optim as optim
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 OPTIM_MAPPING = {"SGD": optim.SGD, "AdamW": optim.AdamW}
 
@@ -33,7 +34,7 @@ def get_accuracy(network, loader, device, std):
     return correct / total
 
 
-def plot_results(output_dicts, outpath):
+def plot_results(output_dicts, outpath, architecture):
     plt.figure()
     plt.plot(output_dicts['base_train'], color='r', label='ours')
     if 'second_train' in output_dicts:
@@ -42,7 +43,7 @@ def plot_results(output_dicts, outpath):
     plt.xlabel('epoch number')
     plt.title("Train accuracy according to epoch")
     plt.legend()
-    plt.savefig(outpath + '/train_accuracy.png')
+    plt.savefig(outpath + f'/train_accuracy_{architecture}.png')
     plt.show()
 
     plt.figure()
@@ -53,7 +54,7 @@ def plot_results(output_dicts, outpath):
     plt.xlabel('epoch number')
     plt.legend()
     plt.title("Test accuracy according to epoch")
-    plt.savefig(outpath + '/test_accuracy.png')
+    plt.savefig(outpath + f'/test_accuracy_{architecture}.png')
     plt.show()
 
     base_losses = output_dicts['base_loss']
@@ -72,7 +73,7 @@ def plot_results(output_dicts, outpath):
     plt.legend()
     plt.ylabel('Loss')
     plt.title("Loss every 50 batches")
-    plt.savefig(outpath + '/loss.png')
+    plt.savefig(outpath + f'/loss_{architecture}.png')
     plt.show()
 
     plt.figure()
@@ -84,7 +85,7 @@ def plot_results(output_dicts, outpath):
     plt.xlabel('epoch number')
     plt.ylabel('Accuracies differences')
     plt.title("Accuracies differences")
-    plt.savefig(outpath + '/diff_accuracies.png')
+    plt.savefig(outpath + f'/diff_accuracies_{architecture}.png')
     plt.show()
 
     plt.figure()
@@ -93,9 +94,11 @@ def plot_results(output_dicts, outpath):
     plt.xlabel('epoch number')
     plt.ylabel('Non_zero proportion')
     plt.title("Regularized_struct")
-    plt.savefig(outpath + '/regularized_struct.png')
+    plt.savefig(outpath + f'/regularized_struct_{architecture}.png')
     plt.show()
 
+    with open(outpath + f'/results_{architecture}.json', 'w') as f:
+        json.dump(output_dicts, f)
 
 def print_network_structure(network):
     diff_proportions = list()

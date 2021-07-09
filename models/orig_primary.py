@@ -53,7 +53,7 @@ class PrimaryNetwork(nn.Module):
 
     def forward(self, x, std, keep_weights=False):
 
-        noise = self.hyper_net(std)
+        noise = self.hyper_net(std).view(-1)
         index = 0
         curr = 0
         x = F.relu(self.bn1(self.conv1(x)))
@@ -79,7 +79,7 @@ class PrimaryNetwork(nn.Module):
         # x = F.linear((x.view(-1, 64) / math.sqrt(64)), noise[curr:curr + 64 * self.num_classes].reshape((self.num_classes, 64)))
         x = self.final(x.view(-1, 64))
 
-        return x, noise[0, :int(self.hyper_size)]
+        return x, noise[:int(self.hyper_size)]
 
     def get_size_ratio(self, std):
 
