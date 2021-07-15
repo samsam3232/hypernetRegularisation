@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+import numpy as np
 import datetime
 from utils import get_accuracy, plot_results
 from data.get_data import get_data_loaders
@@ -15,9 +16,9 @@ def end_of_training_stats(outputs_dict, output_path):
     plot_results(outputs_dict, output_path, architecture)
 
 
-def print_size_ratio(network, std, print_rat = False):
+def print_size_ratio(network, std, mean, print_rat = False):
 
-    size_rat = network.get_size_ratio(std)
+    size_rat = network.get_size_ratio(std, mean)
     if print_rat:
         print("\t \t Size ratio", size_rat)
     return size_rat
@@ -94,6 +95,8 @@ def train(regularize, dataset_name, dropout, transform_train, transform_test, ba
     print("\t \t", "=" * 80)
 
     # Getting the main network
+    regularize = np.array(regularize).reshape((3, 3))
+    regularize_2 = np.array(regularize_2).reshape((3, 3))
 
     network = PrimaryNetwork(num_classes, device, regularize, 1, dropout[0], random_type=random_type[0], architecture=architecture)
     network.to(device)
@@ -119,7 +122,7 @@ def train(regularize, dataset_name, dropout, transform_train, transform_test, ba
     accuracy_test = list()
     net_struct = list()
 
-    net_struct.append(print_size_ratio(network, 3.0))
+    net_struct.append(print_size_ratio(network, get_std(0, stds, std_epochs), means[0]))
     for epoch in tqdm(range(train_epochs)):
 
         network.train()
@@ -169,7 +172,7 @@ def train(regularize, dataset_name, dropout, transform_train, transform_test, ba
                     losses_2.append(running_loss2 - between_loss2)
                     between_loss2 = running_loss2
 
-        print_size_ratio(network, std, True)
+        print_size_ratio(network, std, means[0], True)
         curr_accuracy_train= get_accuracy(network, trainloader, device, std)
         accuracy_train.append(get_accuracy(network, trainloader, device, std))
         print(f'Curr epoch {epoch} train accuracy: {curr_accuracy_train}')

@@ -24,6 +24,8 @@ class PrimaryNetwork(nn.Module):
             [self.MOD_SIZES[i * 2: i * 2 + 2] for i in range(len(regularize.reshape(9))) if regularize.reshape(9)[i]])
         self.hyper_net = get_hyper(device, self.hyper_size, dropout, architecture=architecture, random_type=random_type)
         self.hyper_net.to(device)
+        print(f"Architecture {architecture} hyper: ")
+        print(self.hyper_size)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.std = std
@@ -75,8 +77,8 @@ class PrimaryNetwork(nn.Module):
 
         return x, noise[:int(self.hyper_size)]
 
-    def get_size_ratio(self, std):
+    def get_size_ratio(self, std, mean):
 
-        weights = self.hyper_net(std, batch=32)
+        weights = self.hyper_net(std, mean, batch=32)
         indice = torch.randint(high=32, size = ())
         return torch.count_nonzero(weights[indice, :int(self.hyper_size)]) / weights[indice, :int(self.hyper_size)].numel()
