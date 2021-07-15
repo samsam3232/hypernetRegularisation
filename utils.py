@@ -99,34 +99,3 @@ def plot_results(output_dicts, outpath, architecture):
 
     with open(outpath + f'/results_{architecture}.json', 'w') as f:
         json.dump(output_dicts, f)
-
-def print_network_structure(network):
-    diff_proportions = list()
-    for i in range(5):
-        non_zero = 0
-        noise = network.hyper_net()
-        curr = 0
-        for index in range(len(network.mod_sizes)):
-            if network.regularize[np.ceil(index / 2)]:
-                non_zero += np.count_nonzero(noise[curr: curr + network.mod_sizes[index]])
-            else:
-                if index == 0:
-                    non_zero += np.count_nonzero(network.conv1.weights)
-                elif index != (len(network.mod_sizes) - 1):
-                    if index % 2 == 1:
-                        non_zero += np.count_nonzero(network.res_net[int(index / 2)].conv1.weight)
-                    else:
-                        non_zero += np.count_nonzero(network.res_net[int(index / 2)].conv2.weight)
-                else:
-                    non_zero += np.count_nonzero(network.final.weight)
-            curr += network.mod_sizes[index]
-
-        print("\t \t Current proportion of zeros for batch {}: {}".format(i + 1, (
-                    1 - (non_zero / torch.sum(network.mod_sizes)))))
-
-        diff_proportions.append((1 - (non_zero / torch.sum(network.mod_sizes))))
-
-    print("\t \t", '=' * 80)
-    print("Final average proportion: {}".format(np.sum(diff_proportions) / 5))
-    print("\t \t", "=" * 80)
-
