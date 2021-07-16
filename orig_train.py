@@ -11,7 +11,7 @@ from tqdm import tqdm
 import torch.nn as nn
 import math
 
-def end_of_training_stats(outputs_dict, output_path):
+def end_of_training_stats(outputs_dict, output_path, architecture):
 
     plot_results(outputs_dict, output_path, architecture)
 
@@ -204,7 +204,6 @@ if __name__ == "__main__":
     parser.add_argument('--transform_train', type=str, default='tensor_only', help= "Name of the transform for the training set")
     parser.add_argument("--transform_test", type=str, default='tensor_only', help="Name of the transform for the training set")
     parser.add_argument("--batch_size", type = int, default=16)
-    parser.add_argument("--optimizer_name", type=str, default="AdamW", help="Which optimizer to use")
     parser.add_argument("--lr", type=float, default=[0.1, 0.1], help="Learning rate of the optimizer", nargs="*")
     parser.add_argument("--momentum", type=float, default=[0.9, 0.9], help="Momentum in case of SGD")
     parser.add_argument("--weight_decay", type=float, default=[5e-4, 5e-4], nargs='*', help="Weight_decay")
@@ -212,11 +211,12 @@ if __name__ == "__main__":
     parser.add_argument("--train_epochs", type=int,  default=50)
     parser.add_argument("--architecture", type = str, default="A", help="Which hypernet architecture to choose")
     parser.add_argument("--stds", type=float, nargs='*', default=[1.0, 2.0, 3.0], help="Which standard deviations to use")
-    parser.add_argument("--std_epochs", type=int, nargs='*', default=[15, 30, 70], help="From which epoch to run it")
+    parser.add_argument("--std_epochs", type=int, nargs='*', default=[0, 30, 70], help="From which epoch to run it")
     parser.add_argument("--coeffs", type=float, nargs='*', default=[0.002, 0.001], help="Which standard deviations to use")
     parser.add_argument("--coeffs_epochs", type=int, nargs='*', default=[15, 30], help="From which epoch to run it")
     parser.add_argument("--random_type", type=str, nargs='*', default=["normal", "uniform"], help="What distribution to draw the random samples from")
     parser.add_argument("--means", type=str, nargs='*', default=[0, 0], help="What distribution to draw the random samples from")
     args = parser.parse_args()
+    print("Arguments: ", vars(args))
     outputs_dict, output_path, architecture = train(**vars(args))
     end_of_training_stats(outputs_dict, output_path, architecture)
