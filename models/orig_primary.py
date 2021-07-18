@@ -25,7 +25,7 @@ class PrimaryNetwork(nn.Module):
         self.hyper_net = get_hyper(device, self.hyper_size, dropout, architecture=architecture, random_type=random_type)
         self.hyper_net.to(device)
         print(f"Architecture {architecture} hyper: ")
-        print(self.hyper_size)
+        print(self.hyper_net)
         self.maxpool1 = nn.MaxPool2d(3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.std = std

@@ -122,7 +122,7 @@ def train(regularize, dataset_name, dropout, transform_train, transform_test, ba
     accuracy_test = list()
     net_struct = list()
 
-    net_struct.append(print_size_ratio(network, get_std(0, stds, std_epochs), means[0]))
+    net_struct.append(print_size_ratio(network, get_std(0, stds, std_epochs), means[0]).item())
     for epoch in tqdm(range(train_epochs)):
 
         network.train()
@@ -166,7 +166,11 @@ def train(regularize, dataset_name, dropout, transform_train, transform_test, ba
 
             if i % 20 == 19:
                 losses.append(running_loss - between_loss)
-                net_struct.append(print_size_ratio(network, std))
+                net_struct.append(print_size_ratio(network, std, means[0]).item())
+                if net_struct[-1] == 1.0:
+                  l1_coeff = 3.0
+                else:
+                  l1_coeff = get_l1_coeff(epoch, coeffs, coeffs_epochs)
                 between_loss = running_loss
                 if setup == "COMP":
                     losses_2.append(running_loss2 - between_loss2)
@@ -206,14 +210,14 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type = int, default=16)
     parser.add_argument("--lr", type=float, default=[0.1, 0.1], help="Learning rate of the optimizer", nargs="*")
     parser.add_argument("--momentum", type=float, default=[0.9, 0.9], help="Momentum in case of SGD")
-    parser.add_argument("--weight_decay", type=float, default=[5e-4, 5e-4], nargs='*', help="Weight_decay")
+    parser.add_argument("--weight_decay", type=float, default=[0, 0], nargs='*', help="Weight_decay")
     parser.add_argument("--setup", type=str, default="SINGLE", help = "Set to COMP if you want to compare two models")
     parser.add_argument("--train_epochs", type=int,  default=50)
     parser.add_argument("--architecture", type = str, default="A", help="Which hypernet architecture to choose")
     parser.add_argument("--stds", type=float, nargs='*', default=[1.0, 2.0, 3.0], help="Which standard deviations to use")
     parser.add_argument("--std_epochs", type=int, nargs='*', default=[0, 30, 70], help="From which epoch to run it")
-    parser.add_argument("--coeffs", type=float, nargs='*', default=[0.002, 0.001], help="Which standard deviations to use")
-    parser.add_argument("--coeffs_epochs", type=int, nargs='*', default=[15, 30], help="From which epoch to run it")
+    parser.add_argument("--coeffs", type=float, nargs='*', default=[0.08, 0.15], help="Which standard deviations to use")
+    parser.add_argument("--coeffs_epochs", type=int, nargs='*', default=[0, 5], help="From which epoch to run it")
     parser.add_argument("--random_type", type=str, nargs='*', default=["normal", "uniform"], help="What distribution to draw the random samples from")
     parser.add_argument("--means", type=str, nargs='*', default=[0, 0], help="What distribution to draw the random samples from")
     args = parser.parse_args()
